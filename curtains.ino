@@ -18,24 +18,31 @@ namespace MotorCtl {
 
   void setup() {
     myStepper.setSpeed(SPEED);
-
     pinMode(SPPED_PIN_1, OUTPUT);
     pinMode(SPPED_PIN_2, OUTPUT);
+  }
+
+  void powerOn() {
     digitalWrite(SPPED_PIN_1, HIGH);
     digitalWrite(SPPED_PIN_2, HIGH);
   }
+  
+  void powerOff() {
+    digitalWrite(SPPED_PIN_1, LOW);
+    digitalWrite(SPPED_PIN_2, LOW);
+  }
 
   void stepForward() {
+    powerOn();
     myStepper.step(STEPS);
   }
 
   void stepBackward() {
+    powerOn();
     myStepper.step(-STEPS);
   }
 
 }
-
-
 
 
 namespace Controller {
@@ -53,12 +60,20 @@ namespace Controller {
     return digitalRead(reedPin) == LOW;
   }
 
+  void stopTransition() {
+    if (currentState == State::IN_TRANSITION) {
+      MotorCtl::powerOff();
+      lastMovingDir = movingDir;
+      movingDir = 0;
+      currentState = State::UNKNOWN;
+    }
+  }
+
   void onReedClosedInterruption() {
     Serial.print("onReedClosedInterruption ");
     Serial.println(movingDir);
     if (movingDir == -1 && isReedActivated(PIN_REED_CLOSED)) {
-      lastMovingDir = movingDir;
-      movingDir = 0;
+      stopTransition();
       currentState = State::CLOSED;
     }
   }
@@ -67,8 +82,7 @@ namespace Controller {
     Serial.print("onReedOpenInterruption ");
     Serial.println(movingDir);
     if (movingDir == 1 && isReedActivated(PIN_REED_OPEN)) {
-      lastMovingDir = movingDir;
-      movingDir = 0;
+      stopTransition();
       currentState = State::CLOSED;
     }
   }
@@ -95,14 +109,6 @@ namespace Controller {
     movingDir = 1;
     currentState = State::IN_TRANSITION;
     return true;
-  }
-
-  void stopTransition() {
-    if (currentState == State::IN_TRANSITION) {
-      lastMovingDir = movingDir;
-      movingDir = 0;
-      currentState = State::UNKNOWN;
-    }
   }
 
   bool toggle() {
@@ -135,13 +141,10 @@ namespace Controller {
   }
 
   void loop() {
-    int t = millis();
     if (movingDir == -1) {
       MotorCtl::stepBackward();
-      Serial.println(millis() - t);
     } else if (movingDir == 1) {
       MotorCtl::stepForward();
-      Serial.println(millis() - t);
     }
   }
 
@@ -170,14 +173,12 @@ void setup() {
 }
 
 void loop() {
-//  Serial.println(millis());
-
   if (Button::isPressed()) {
-    delay(500); // avoid incidental doubleclicks
     Serial.println("Button pressed");
     Controller::toggle();
+    delay(100); // avoid incidental doubleclicks
   }
 
-  Controller::loop();
-  
+  Controller::loop();  
 }
+
