@@ -6,7 +6,7 @@
 
 namespace MotorCtl {
   const int STEPS_PER_REVOLUTION = 200;
-  const int STEPS = 10; // steps per interruption check
+  const int STEPS = 5; // steps per interruption check
   const int SPEED = 60;
 
   const int SPPED_PIN_1 = 9;
@@ -170,7 +170,7 @@ namespace Button {
 }
 
 
-byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
+byte Ethernet::buffer[700]; // tcp/ip send and receive buffer
 
 namespace HttpServer {
 
@@ -201,12 +201,28 @@ namespace HttpServer {
   }
 
   void loop(){
-    // wait for an incoming TCP packet, but ignore its contents
-    if (ether.packetLoop(ether.packetReceive())) {
+
+    // check if valid tcp data is received
+    word pos = ether.packetLoop(ether.packetReceive());
+    if (pos) {
+      char* data = (char *) Ethernet::buffer + pos;
+
+      // HTTP API:
+      if (strncmp("GET /stop", data, 9) == 0) {
+        Controller::stopTransition();
+      } else if (strncmp("GET /open", data, 9) == 0) {
+        Controller::openCurtains();
+      } else if (strncmp("GET /close", data, 10) == 0) {
+        Controller::closeCurtains();
+      } else {
+        Controller::toggle();
+      }
+
+      // send response
       memcpy_P(ether.tcpOffset(), page, sizeof page);
       ether.httpServerReply(sizeof page - 1);
-      Controller::toggle();
     }
+
   }
 
 }
