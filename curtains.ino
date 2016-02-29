@@ -49,80 +49,79 @@ namespace Controller {
 
   const int PIN_REED_CLOSED = 3;
   const int PIN_REED_OPEN = 2;
+  const int MAX_TRANSITION_TIME = 20e3;
 
-  enum class State {UNKNOWN, OPEN, CLOSED, IN_TRANSITION};
-
-  volatile State currentState = State::UNKNOWN;
   volatile int movingDir = 0; // -1 closing; 0: stopped; 1: opening
   volatile int lastMovingDir = 0; // -1 closing; 0: stopped; 1: opening
+  volatile unsigned long startTransitionMillis = 0;
+  
 
   bool isReedActivated(int reedPin) {
     return digitalRead(reedPin) == LOW;
   }
 
+  bool isClosed() {
+    return isReedActivated(PIN_REED_CLOSED);
+  }
+
+  bool isOpen() {
+    return isReedActivated(PIN_REED_OPEN);
+  }
+  
   void stopTransition() {
-    if (currentState == State::IN_TRANSITION) {
+    Serial.println("stopTransition()");
+    startTransitionMillis = millis();
+    if (movingDir != 0) {
       MotorCtl::powerOff();
       lastMovingDir = movingDir;
       movingDir = 0;
-      currentState = State::UNKNOWN;
     }
   }
 
   void onReedClosedInterruption() {
-    Serial.print("onReedClosedInterruption ");
-    Serial.println(movingDir);
-    if (movingDir == -1 && isReedActivated(PIN_REED_CLOSED)) {
+    if (movingDir == -1 && isClosed()) {
       stopTransition();
-      currentState = State::CLOSED;
     }
   }
 
   void onReedOpenInterruption() {
-    Serial.print("onReedOpenInterruption ");
-    Serial.println(movingDir);
-    if (movingDir == 1 && isReedActivated(PIN_REED_OPEN)) {
+    if (movingDir == 1 && isOpen()) {
       stopTransition();
-      currentState = State::CLOSED;
     }
   }
 
-  bool closeCurtains() {
-    if (movingDir == -1) {
-      // already closing
-      return false;
+  void closeCurtains() {
+    Serial.println("closeCurtains()");
+    if (movingDir == -1 || isClosed()) {
+      // already closing/closed
+      return;
     }
 
+    startTransitionMillis = millis();
     lastMovingDir = movingDir;
     movingDir = -1;
-    currentState = State::IN_TRANSITION;
-    return true;
   }
 
-  bool openCurtains() {
-    if (movingDir == 1) {
-      // already opening
-      return false;
+  void openCurtains() {
+    Serial.println("openCurtains()");
+    if (movingDir == 1 || isOpen()) {
+      // already opening/open
+      return;
     }
 
+    startTransitionMillis = millis();
     lastMovingDir = movingDir;
     movingDir = 1;
-    currentState = State::IN_TRANSITION;
-    return true;
   }
 
   bool toggle() {
-    switch(currentState){
-      case State::OPEN:
-        closeCurtains();
-        break;
-      case State::CLOSED:
-        openCurtains();
-        break;
-      case State::IN_TRANSITION:
-        stopTransition();
-        break;
-      default:
+    if (movingDir != 0) {
+      stopTransition();
+    } else if (isClosed()) {
+      openCurtains();
+    } else if (isOpen()) {
+      closeCurtains();
+    } else {
         if (lastMovingDir == -1) {
           openCurtains();
         } else {
@@ -145,6 +144,12 @@ namespace Controller {
       MotorCtl::stepBackward();
     } else if (movingDir == 1) {
       MotorCtl::stepForward();
+    }
+
+    // make sure we don't run motor for mor than MAX_TRANSITION_TIME
+    // in case one of the reeds gets broken or something
+    if (movingDir != 0 && startTransitionMillis > 0 && millis() - startTransitionMillis > MAX_TRANSITION_TIME) {
+      stopTransition();
     }
   }
 
@@ -176,7 +181,7 @@ void loop() {
   if (Button::isPressed()) {
     Serial.println("Button pressed");
     Controller::toggle();
-    delay(100); // avoid incidental doubleclicks
+    delay(200); // avoid incidental doubleclicks
   }
 
   Controller::loop();  
