@@ -1,6 +1,7 @@
 
 #include <Arduino.h>
 #include <Stepper.h>
+#include <EtherCard.h>
 
 
 namespace MotorCtl {
@@ -9,9 +10,7 @@ namespace MotorCtl {
   const int SPEED = 60;
 
   const int SPPED_PIN_1 = 9;
-  const int SPPED_PIN_2 = 8;
-  //const int SPPED_PIN_1 = 9;
-  //const int SPPED_PIN_2 = 10;
+  const int SPPED_PIN_2 = 10;
 
   Stepper myStepper(STEPS_PER_REVOLUTION, 4, 5, 7, 6);
   //Stepper myStepper(STEPS_PER_REVOLUTION, 8, 11, 12, 13);
@@ -26,7 +25,7 @@ namespace MotorCtl {
     digitalWrite(SPPED_PIN_1, HIGH);
     digitalWrite(SPPED_PIN_2, HIGH);
   }
-  
+
   void powerOff() {
     digitalWrite(SPPED_PIN_1, LOW);
     digitalWrite(SPPED_PIN_2, LOW);
@@ -54,7 +53,7 @@ namespace Controller {
   volatile int movingDir = 0; // -1 closing; 0: stopped; 1: opening
   volatile int lastMovingDir = 0; // -1 closing; 0: stopped; 1: opening
   volatile unsigned long startTransitionMillis = 0;
-  
+
 
   bool isReedActivated(int reedPin) {
     return digitalRead(reedPin) == LOW;
@@ -67,7 +66,7 @@ namespace Controller {
   bool isOpen() {
     return isReedActivated(PIN_REED_OPEN);
   }
-  
+
   void stopTransition() {
     Serial.println("stopTransition()");
     startTransitionMillis = millis();
@@ -131,12 +130,12 @@ namespace Controller {
   }
 
   void setup() {
-    MotorCtl::setup();    
+    MotorCtl::setup();
 
     pinMode(PIN_REED_OPEN, INPUT_PULLUP);
     pinMode(PIN_REED_CLOSED, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PIN_REED_OPEN), onReedOpenInterruption, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_REED_CLOSED), onReedClosedInterruption, CHANGE);    
+    attachInterrupt(digitalPinToInterrupt(PIN_REED_CLOSED), onReedClosedInterruption, CHANGE);
   }
 
   void loop() {
@@ -167,14 +166,57 @@ namespace Button {
   bool isPressed(){
     return digitalRead(PIN_BUTTON) == LOW;
   }
-  
+
+}
+
+
+byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
+
+namespace HttpServer {
+
+  // ethernet interface ip address
+  static byte myip[] = { 192,168,0,200 };
+  // gateway ip address
+  static byte gwip[] = { 192,168,0,1 };
+  // ethernet mac address - must be unique on your network
+  static byte mymac[] = { 0x74,0x49,0x69,0x2D,0x30,0x31 };
+
+  const char page[] PROGMEM =
+  "HTTP/1.0 200 OK\r\n"
+  "Content-Type: text/plain\r\n"
+  "\r\n"
+  "OK"
+  ;
+
+  void setup(){
+    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) {
+      Serial.println( "Failed to access Ethernet controller");
+    }
+
+    ether.staticSetup(myip, gwip);
+
+    ether.printIp("IP:  ", ether.myip);
+    ether.printIp("GW:  ", ether.gwip);
+    ether.printIp("DNS: ", ether.dnsip);
+  }
+
+  void loop(){
+    // wait for an incoming TCP packet, but ignore its contents
+    if (ether.packetLoop(ether.packetReceive())) {
+      memcpy_P(ether.tcpOffset(), page, sizeof page);
+      ether.httpServerReply(sizeof page - 1);
+      Controller::toggle();
+    }
+  }
+
 }
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(57600);
   Controller::setup();
   Button::setup();
+  HttpServer::setup();
 }
 
 void loop() {
@@ -184,6 +226,7 @@ void loop() {
     delay(200); // avoid incidental doubleclicks
   }
 
-  Controller::loop();  
+  Controller::loop();
+  HttpServer::loop();
 }
 
