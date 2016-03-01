@@ -7,7 +7,7 @@
 namespace MotorCtl {
   const int STEPS_PER_REVOLUTION = 200;
   const int STEPS = 5; // steps per interruption check
-  const int SPEED = 60;
+  const int SPEED = 100;
 
   const int SPPED_PIN_1 = 9;
   const int SPPED_PIN_2 = 10;
@@ -48,7 +48,7 @@ namespace Controller {
 
   const int PIN_REED_CLOSED = 3;
   const int PIN_REED_OPEN = 2;
-  const int MAX_TRANSITION_TIME = 20e3;
+  const int MAX_TRANSITION_TIME = 15e3;
 
   volatile int movingDir = 0; // -1 closing; 0: stopped; 1: opening
   volatile int lastMovingDir = 0; // -1 closing; 0: stopped; 1: opening
