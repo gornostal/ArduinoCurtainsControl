@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Curtain Control</title>
+
+<link rel="shortcut icon" href="apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="57x57" href="apple-icon-57x57.png" />
+<link rel="apple-touch-icon" sizes="72x72" href="apple-icon-72x72.png" />
+<link rel="apple-touch-icon" sizes="114x114" href="apple-icon-114x114.png" />
+<link rel="apple-touch-icon" sizes="144x144" href="apple-icon-144x144.png" />
+
+<link rel="stylesheet" href="material.min.css">
+<script src="material.min.js"></script>
+<style type="text/css">
+/**
+ https://getmdl.io/components/index.html#snackbar-section
+ */
+body {
+    background: #eee;
+    overflow: hidden;
+}
+.c-buttons {
+    margin: 1em;
+    margin-top: 10em;
+    text-align: center;
+}
+button {
+    margin: 2em !important;
+}
+
+/* Fix snackbar for mobile */
+.mdl-snackbar {
+    transform: translate(0, 80px);
+}
+.mdl-snackbar--active {
+    transform: translate(0, 0);
+}
+</style>
+
+
+<div class="c-buttons">
+    <!-- Accent-colored raised button with ripple -->
+    <button class="toggle-curtains mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+      Toggle curtains
+    </button>
+
+    <div>
+        <button class="open-curtains mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+          Open
+        </button>
+        <button class="close-curtains mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+          Close
+        </button>
+    </div>
+</div>
+
+<div id="error-snackbar" class="mdl-js-snackbar mdl-snackbar">
+  <div class="mdl-snackbar__text"></div>
+  <button class="mdl-snackbar__action" type="button"></button>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    var snackbarContainer = document.querySelector('#error-snackbar');
+    document.querySelector('.toggle-curtains').addEventListener('click', function() {
+        sendRequest('toggle');
+    });
+    document.querySelector('.open-curtains').addEventListener('click', function() {
+        sendRequest('open');
+    });
+    document.querySelector('.close-curtains').addEventListener('click', function() {
+        sendRequest('close');
+    });
+
+    function sendRequest(path) {
+        var iframe = document.createElement('iframe');
+        iframe.src = "http://localhost/" + path;
+        iframe.style.display = 'none';
+        iframe.onError = iframe.onerror = function onError() {
+            snackbarContainer.MaterialSnackbar.showSnackbar({
+                message: "Error has occurred"
+            });
+        };
+        iframe.onload = function() {
+            snackbarContainer.MaterialSnackbar.showSnackbar({
+                message: "Success"
+            });
+        };
+        document.body.appendChild(iframe);
+    }
+}());
+</script>
