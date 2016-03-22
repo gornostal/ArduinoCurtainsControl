@@ -77,7 +77,7 @@ button {
 
     function sendRequest(path) {
         var iframe = document.createElement('iframe');
-        iframe.src = "http://localhost/" + path;
+        iframe.src = "http://192.168.0.200/" + path;
         iframe.style.display = 'none';
         iframe.onError = iframe.onerror = function onError() {
             snackbarContainer.MaterialSnackbar.showSnackbar({
