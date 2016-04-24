@@ -4,10 +4,12 @@
 #include <EtherCard.h>
 
 
+const int PIN_POT = A1;
+
 namespace MotorCtl {
   const int STEPS_PER_REVOLUTION = 200;
   const int STEPS = 5; // steps per interruption check
-  const int SPEED = 100;
+  const int DEFAULT_SPEED = 100;
 
   const int SPPED_PIN_1 = 9;
   const int SPPED_PIN_2 = 10;
@@ -16,9 +18,13 @@ namespace MotorCtl {
   //Stepper myStepper(STEPS_PER_REVOLUTION, 8, 11, 12, 13);
 
   void setup() {
-    myStepper.setSpeed(SPEED);
+    myStepper.setSpeed(DEFAULT_SPEED);
     pinMode(SPPED_PIN_1, OUTPUT);
     pinMode(SPPED_PIN_2, OUTPUT);
+  }
+
+  void setSpeed(int speed) {
+    myStepper.setSpeed(speed);
   }
 
   void powerOn() {
@@ -236,6 +242,10 @@ void setup() {
 }
 
 void loop() {
+  // set speed
+  int speed = map(analogRead(PIN_POT), 0, 1023, 309, 80);
+  MotorCtl::setSpeed(speed);
+
   if (Button::isPressed()) {
     Serial.println("Button pressed");
     Controller::toggle();
