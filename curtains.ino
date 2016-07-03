@@ -7,8 +7,8 @@
 const int PIN_POT = A1;
 
 namespace MotorCtl {
-  const int STEPS_PER_REVOLUTION = 200;
-  const int STEPS = 5; // steps per interruption check
+  const int STEPS_PER_REVOLUTION = 200; // number of steps for the motor to make one revolution
+  const int STEPS = 5; // steps per loop iteration
   const int DEFAULT_SPEED = 100;
 
   const int SPPED_PIN_1 = 9;
@@ -77,6 +77,8 @@ namespace Controller {
     Serial.println("stopTransition()");
     startTransitionMillis = millis();
     if (movingDir != 0) {
+      // this is critical -- if you don't power off your motor, it'll stay in a holding mode,
+      // will also drain current and heat up
       MotorCtl::powerOff();
       lastMovingDir = movingDir;
       movingDir = 0;
@@ -245,9 +247,12 @@ void loop() {
   // set speed
   int speed = map(analogRead(PIN_POT), 0, 1023, 309, 80);
   MotorCtl::setSpeed(speed);
+//  Serial.println(speed);
 
   if (Button::isPressed()) {
     Serial.println("Button pressed");
+    Serial.print("Speed ");
+    Serial.println(speed);
     Controller::toggle();
     delay(200); // avoid incidental doubleclicks
   }
