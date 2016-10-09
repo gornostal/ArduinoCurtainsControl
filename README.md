@@ -26,3 +26,8 @@ Tools/expendables:
 # Software
 
 * [EtherCard library](https://github.com/jcw/ethercard)
+
+
+# Bonus
+
+* [How To Identify The Wires / Leads Of A Stepper Motor](https://www.youtube.com/watch?v=fTtwWJZlGt4)
