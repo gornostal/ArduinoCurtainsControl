@@ -11,30 +11,25 @@ namespace MotorCtl {
   const int STEPS = 5; // steps per loop iteration
   const int DEFAULT_SPEED = 100;
 
-  const int SPPED_PIN_1 = 9;
-  const int SPPED_PIN_2 = 10;
-
-  Stepper myStepper(STEPS_PER_REVOLUTION, 4, 5, 7, 6);
-  //Stepper myStepper(STEPS_PER_REVOLUTION, 8, 11, 12, 13);
-
+  const int POWER_PIN = 8;
+  
+  Stepper myStepper(STEPS_PER_REVOLUTION, 4, 5, 6, 7);
+  
   void setup() {
     myStepper.setSpeed(DEFAULT_SPEED);
-    pinMode(SPPED_PIN_1, OUTPUT);
-    pinMode(SPPED_PIN_2, OUTPUT);
+    pinMode(POWER_PIN, OUTPUT);
   }
 
   void setSpeed(int speed) {
     myStepper.setSpeed(speed);
   }
-
+  
   void powerOn() {
-    digitalWrite(SPPED_PIN_1, HIGH);
-    digitalWrite(SPPED_PIN_2, HIGH);
+    digitalWrite(POWER_PIN, HIGH);
   }
 
   void powerOff() {
-    digitalWrite(SPPED_PIN_1, LOW);
-    digitalWrite(SPPED_PIN_2, LOW);
+    digitalWrite(POWER_PIN, LOW);
   }
 
   void stepForward() {
@@ -54,7 +49,7 @@ namespace Controller {
 
   const int PIN_REED_CLOSED = 3;
   const int PIN_REED_OPEN = 2;
-  const int MAX_TRANSITION_TIME = 15e3;
+  const int MAX_TRANSITION_TIME = 10e3;
 
   volatile int movingDir = 0; // -1 closing; 0: stopped; 1: opening
   volatile int lastMovingDir = 0; // -1 closing; 0: stopped; 1: opening
@@ -165,7 +160,7 @@ namespace Controller {
 
 namespace Button {
 
-  const int PIN_BUTTON = 14;
+  const int PIN_BUTTON = 9;
 
   void setup() {
     pinMode(PIN_BUTTON, INPUT_PULLUP);
@@ -182,6 +177,8 @@ byte Ethernet::buffer[700]; // tcp/ip send and receive buffer
 
 namespace HttpServer {
 
+  const int CS_PIN = 10;
+
   // ethernet interface ip address
   static byte myip[] = { 192,168,0,200 };
   // gateway ip address
@@ -197,7 +194,7 @@ namespace HttpServer {
   ;
 
   void setup(){
-    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) {
+    if (ether.begin(sizeof Ethernet::buffer, mymac, CS_PIN) == 0) {
       Serial.println( "Failed to access Ethernet controller");
     }
 
@@ -238,16 +235,20 @@ namespace HttpServer {
 
 void setup() {
   Serial.begin(57600);
+  Serial.println("controller setup");
   Controller::setup();
+  Serial.println("button setup");
   Button::setup();
+  Serial.println("http setup");
   HttpServer::setup();
+  Serial.println("setup end");
 }
 
 void loop() {
   // set speed
   int speed = map(analogRead(PIN_POT), 0, 1023, 309, 80);
   MotorCtl::setSpeed(speed);
-//  Serial.println(speed);
+  //Serial.println(speed);
 
   if (Button::isPressed()) {
     Serial.println("Button pressed");
