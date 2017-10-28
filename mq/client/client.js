@@ -1,4 +1,3 @@
-const WebSocket = require("ws")
 const request = require("request")
 
 const apiUrl = process.env.API_URL
@@ -17,20 +16,30 @@ if (!arduinoUrl) {
 const allowedCommands = ["open", "close", "toggle", "stop"]
 
 function connect() {
-  log(`Connecting to ${apiUrl}`)
-  const ws = new WebSocket(`${apiUrl}/subscribe?accessToken=${accessToken}`)
-  ws.on("open", () => log("Connected"))
-  ws.on("message", data => handleMessage(JSON.parse(data)))
-  ws.on("error", data => log("Error", JSON.stringify(data)))
-  ws.on("close", () => {
-    // reconnect
-    log("Disconnected. Trying to reconnect...")
-    setTimeout(connect, 3e3)
+  request(`${apiUrl}/long-polling?accessToken=${accessToken}`, (error, response, body) => {
+    if (error) {
+      log(`HTTP error: ${error}. Reconnecting...`)
+      setTimeout(connect, 3e3)
+      return
+    }
+
+    if (response.statusCode === 204) {
+      connect()
+      return
+    }
+
+    try {
+      const data = JSON.parse(body)
+      handleCommand(data.command)
+    } catch (e) {
+      log(`Error occurred while handling request ${e.message}`)
+    }
+
+    connect()
   })
 }
 
-function handleMessage(data) {
-  const { command } = data
+function handleCommand(command) {
   if (!allowedCommands.includes(command)) {
     log(`Unrecognized command "${command}"`)
     return

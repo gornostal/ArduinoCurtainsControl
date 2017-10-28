@@ -4,7 +4,6 @@
   "main": "client.js",
   "license": "MIT",
   "dependencies": {
-    "request": "^2.83.0",
-    "ws": "^3.2.0"
+    "request": "^2.83.0"
   }
 }

@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.18.2",
+    "connect-timeout": "^1.9.0",
     "express": "^4.16.2",
     "ws": "^3.2.0"
   }
