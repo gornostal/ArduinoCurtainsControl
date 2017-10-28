@@ -3,6 +3,7 @@
 cd `dirname $0`
 cd ..
 
-cmd="API_URL=$1 ACCESS_TOKEN=$2 ARDUINO_URL=$3 node client.js"
+./bin/env.sh
+cmd="API_URL=$API_URL ACCESS_TOKEN=$ACCESS_TOKEN ARDUINO_URL=$ARDUINO_URL node client.js"
 
 nohup bash -c "($cmd > client.out) &> client_err.out" &
