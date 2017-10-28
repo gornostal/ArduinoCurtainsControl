@@ -2,3 +2,6 @@ node_modules
 .env
 .pid
 env.sh
+client.out
+client_err.out
+nohup.out
