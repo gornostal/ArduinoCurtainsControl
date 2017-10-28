@@ -25,7 +25,7 @@ function connect() {
   ws.on("close", () => {
     // reconnect
     log("Disconnected. Trying to reconnect...")
-    setTimeout(connect, 500)
+    setTimeout(connect, 3e3)
   })
 }
 
