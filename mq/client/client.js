@@ -16,27 +16,32 @@ if (!arduinoUrl) {
 const allowedCommands = ["open", "close", "toggle", "stop"]
 
 function connect() {
-  request(`${apiUrl}/long-polling?accessToken=${accessToken}`, (error, response, body) => {
-    if (error) {
-      log(`HTTP error: ${error}. Reconnecting...`)
-      setTimeout(connect, 3e3)
-      return
-    }
+  try {
+    request(`${apiUrl}/long-polling?accessToken=${accessToken}`, (error, response, body) => {
+      if (error) {
+        log(`HTTP error: ${error}. Reconnecting...`)
+        setTimeout(connect, 3e3)
+        return
+      }
 
-    if (response.statusCode === 204) {
+      if (response.statusCode === 204) {
+        connect()
+        return
+      }
+
+      try {
+        const data = JSON.parse(body)
+        handleCommand(data.command)
+      } catch (e) {
+        log(`Error occurred while handling request ${e.message}`)
+      }
+
       connect()
-      return
-    }
-
-    try {
-      const data = JSON.parse(body)
-      handleCommand(data.command)
-    } catch (e) {
-      log(`Error occurred while handling request ${e.message}`)
-    }
-
-    connect()
-  })
+    })
+  } catch (e) {
+    log(`Request error: ${e}. Reconnecting...`)
+    setTimeout(connect, 3e3)
+  }
 }
 
 function handleCommand(command) {
