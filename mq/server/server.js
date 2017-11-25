@@ -24,7 +24,7 @@ app.get("/health-check", function(req, res) {
   }
 
   try {
-    sendLongPollingCommand(command)
+    sendLongPollingCommand("ping")
   } catch (e) {
     res.status(500).send({ error: e.message })
     return
