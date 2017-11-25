@@ -3,5 +3,5 @@ node_modules
 .pid
 env.sh
 client.out
-client_err.out
 nohup.out
+package-lock.json

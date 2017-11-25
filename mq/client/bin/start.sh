@@ -4,6 +4,9 @@ cd `dirname $0`
 cd ..
 
 source ./bin/env.sh
-cmd="API_URL=$API_URL ACCESS_TOKEN=$ACCESS_TOKEN ARDUINO_URL=$ARDUINO_URL node client.js"
 
-nohup bash -c "($cmd > client.out) &> client_err.out" &
+while true; do
+  node client.js client.out 2>&1
+  echo "Client.js exited with code $?"
+  sleep 1
+done

@@ -3,6 +3,7 @@ const request = require("request")
 const apiUrl = process.env.API_URL
 const accessToken = process.env.ACCESS_TOKEN
 const arduinoUrl = process.env.ARDUINO_URL
+
 if (!apiUrl) {
   throw new Error("API_URL env var must be set")
 }
@@ -13,7 +14,7 @@ if (!arduinoUrl) {
   throw new Error("ARDUINO_URL env var must be set")
 }
 
-const allowedCommands = ["open", "close", "toggle", "stop"]
+const allowedCommands = ["open", "close", "toggle", "stop", "ping"]
 
 function connect() {
   try {
@@ -47,6 +48,10 @@ function connect() {
 function handleCommand(command) {
   if (!allowedCommands.includes(command)) {
     log(`Unrecognized command "${command}"`)
+    return
+  }
+
+  if (command === "ping") {
     return
   }
 

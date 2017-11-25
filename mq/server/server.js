@@ -10,7 +10,7 @@ app.use(bodyParser.json())
 app.use(timeout("30s"))
 app.use(haltOnTimedout)
 
-const allowedCommands = ["open", "close", "toggle", "stop"]
+const allowedCommands = ["open", "close", "toggle", "stop", "ping"]
 const accessToken = process.env.ACCESS_TOKEN
 let wsConnection, longPollingResponse, longPollingTimer
 
