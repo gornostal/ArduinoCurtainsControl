@@ -3,6 +3,8 @@
 cd `dirname $0`
 cd ..
 
+docker stop curtains-ws-server
+
 docker run \
   -d \
   --rm \
