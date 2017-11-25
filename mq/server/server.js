@@ -10,13 +10,28 @@ app.use(bodyParser.json())
 app.use(timeout("30s"))
 app.use(haltOnTimedout)
 
-const allowedCommands = ["open", "close", "toggle", "stop", "ping"]
+const allowedCommands = ["open", "close", "toggle", "stop"]
 const accessToken = process.env.ACCESS_TOKEN
 let wsConnection, longPollingResponse, longPollingTimer
 
 if (!accessToken) {
   throw new Error("ACCESS_TOKEN env var must be set")
 }
+
+app.get("/health-check", function(req, res) {
+  if (!longPollingResponse) {
+    res.status(500).send({ error: "No LP connection" })
+  }
+
+  try {
+    sendLongPollingCommand(command)
+  } catch (e) {
+    res.status(500).send({ error: e.message })
+    return
+  }
+
+  res.send({ ok: true })
+})
 
 app.post("/command", function(req, res) {
   const clientIp = req.connection.remoteAddress
@@ -46,12 +61,10 @@ app.post("/command", function(req, res) {
 
   if (longPollingResponse) {
     try {
-      longPollingResponse.send({ command })
-      longPollingResponse = null
-      clearTimeout(longPollingTimer)
-      log(`Command sent: ${command}`)
+      sendLongPollingCommand(command)
     } catch (e) {
       res.status(500).send({ error: e.message })
+      return
     }
     res.send({ accepted: true, sent: true })
     return
@@ -59,6 +72,13 @@ app.post("/command", function(req, res) {
 
   res.send({ accepted: true, sent: false })
 })
+
+function sendLongPollingCommand(command) {
+  longPollingResponse.send({ command })
+  longPollingResponse = null
+  clearTimeout(longPollingTimer)
+  log(`Command sent: ${command}`)
+}
 
 app.get("/long-polling", (req, res) => {
   const clientIp = req.connection.remoteAddress
