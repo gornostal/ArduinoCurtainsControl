@@ -17,8 +17,12 @@ if (!arduinoUrl) {
 const allowedCommands = ["open", "close", "toggle", "stop", "ping"]
 
 function connect() {
+  const options = {
+    url: `${apiUrl}/long-polling?accessToken=${accessToken}`,
+    timeout: 25e3
+  }
   try {
-    request(`${apiUrl}/long-polling?accessToken=${accessToken}`, (error, response, body) => {
+    request(options, (error, response, body) => {
       if (error) {
         log(`HTTP error: ${error}. Reconnecting...`)
         setTimeout(connect, 3e3)
