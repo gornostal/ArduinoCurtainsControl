@@ -120,7 +120,7 @@ wss.on("connection", function connection(ws, req) {
 server.listen(8080, () => log(`Listening on ${server.address().port}`))
 
 function log(...args) {
-  console.log(new Date(), ...args)
+  console.log([new Date().toISOString(), ...args].join(' '))
 }
 
 function haltOnTimedout(req, res, next) {
