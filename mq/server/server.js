@@ -20,7 +20,9 @@ if (!accessToken) {
 
 app.get("/health-check", function(req, res) {
   if (!longPollingResponse) {
+    log('Error: no long polling connection')
     res.status(500).send({ error: "No LP connection" })
+    return
   }
 
   try {
