@@ -1,0 +1,16 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_NAME: "348853364530.dkr.ecr.us-east-1.amazonaws.com/site-scrapers"
+
+phases:
+  pre_build:
+    commands:
+      - $(aws ecr get-login --no-include-email)
+  build:
+    commands:
+      - docker build -t $IMAGE_NAME .
+  post_build:
+    commands:
+      - docker push $IMAGE_NAME
