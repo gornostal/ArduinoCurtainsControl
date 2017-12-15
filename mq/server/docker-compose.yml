@@ -1,0 +1,17 @@
+version: '3.3'
+
+services:
+
+  server:
+    image: $IMAGE_FULL_NAME
+    restart: always
+    environment:
+      - ACCESS_TOKEN
+      - VIRTUAL_HOST=$DOMAIN_NAME
+      - LETSENCRYPT_HOST=$DOMAIN_NAME
+      - LETSENCRYPT_EMAIL
+
+networks:
+  default:
+    external:
+      name: webproxy

@@ -3,14 +3,53 @@ version: 0.2
 env:
   variables:
     IMAGE_NAME: "348853364530.dkr.ecr.us-east-1.amazonaws.com/curtains-mq-server"
+    DOCKER_CERT_PATH: "/tmp/docker-cert"
+  parameter-store:
+    ACCESS_TOKEN: "/home.gornostal.name/curtains/accessToken"
+    DOMAIN_NAME: "/home.gornostal.name/curtains/domainName"
+    LETSENCRYPT_EMAIL: "/home.gornostal.name/curtains/letsencryptEmail"
+    CA: "/home.gornostal.name/docker/ca"
+    CLIENT_CERT: "/home.gornostal.name/docker/client-cert"
+    CLIENT_KEY: "/home.gornostal.name/docker/client-key"
 
 phases:
   pre_build:
     commands:
-      - $(aws ecr get-login --no-include-email --region us-east-1)
+      - export DOCKER_LOGIN="$(aws ecr get-login --no-include-email --region us-east-1)"
+      - eval $DOCKER_LOGIN
+      - export GIT_REF="$(git show-ref | grep $CODEBUILD_SOURCE_VERSION | grep -iv head)"
+      # GIT_REF_TYPE can be either "origin" (for branches) or "tag"
+      - export GIT_REF_TYPE="$(echo "$GIT_REF" | awk -F "/" '{print $(NF-1)}')"
+      # GIT_REF_NAME is either a branch or tag name
+      - export GIT_REF_NAME="$(echo "$GIT_REF" | awk -F "/" '{print $NF}')"
+      - echo $GIT_REF_TYPE
+      - echo $GIT_REF_NAME
   build:
     commands:
-      - docker build -t $IMAGE_NAME .
-  post_build:
-    commands:
-      - docker push $IMAGE_NAME
+      - |
+        allowedBranches="master dev"
+        if [ "$GIT_REF_TYPE" = "origin" ] && echo $allowedBranches | grep -q "$GIT_REF_NAME"; then
+          cd mq/server
+          export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
+          docker build -t $IMAGE_FULL_NAME .
+          docker push $IMAGE_FULL_NAME
+
+          echo "Deploying..."
+          mkdir $DOCKER_CERT_PATH
+          echo "$CA" > $DOCKER_CERT_PATH/ca.pem
+          echo "$CLIENT_CERT" > $DOCKER_CERT_PATH/cert.pem
+          echo "$CLIENT_KEY" > $DOCKER_CERT_PATH/key.pem
+
+          echo "10.0.0.13 home.gornostal.name" >> /etc/hosts
+          export DOCKER_TLS_VERIFY="1"
+          export DOCKER_HOST="tcp://home.gornostal.name:2376"
+          export DOCKER_MACHINE_NAME="home"
+
+          eval $DOCKER_LOGIN
+
+          docker-compose pull
+          docker-compose down --remove-orphans
+          docker-compose up -d
+
+          rm -rf $DOCKER_CERT_PATH
+        fi
