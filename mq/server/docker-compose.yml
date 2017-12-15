@@ -12,11 +12,11 @@ services:
       - LETSENCRYPT_EMAIL
     logging:
       driver: awslogs
-        options:
-          awslogs-region: us-east-1
-          awslogs-group: /ec2/$DOMAIN_NAME
-          awslogs-stream: /mq/server
-          awslogs-datetime-format: "%Y-%m-%dT%H:%M:%S.%fZ"
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /ec2/$DOMAIN_NAME
+        awslogs-stream: /mq/server
+        awslogs-datetime-format: "%Y-%m-%dT%H:%M:%S.%fZ"
 
 networks:
   default:
