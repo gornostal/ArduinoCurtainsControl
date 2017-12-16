@@ -49,10 +49,12 @@ case "$1" in
     stop
     ;;
   restart)
-    stop; start
+    set +e
+    stop
+    start
+    ;;
   status)
     status
-    ;;
     ;;
   *)
     echo "Usage: $0 {start|stop|status}"
