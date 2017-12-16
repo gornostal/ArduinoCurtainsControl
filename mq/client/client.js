@@ -1,25 +1,12 @@
 const request = require("request")
-
-const apiUrl = process.env.API_URL
-const accessToken = process.env.ACCESS_TOKEN
-const arduinoUrl = process.env.ARDUINO_URL
-
-if (!apiUrl) {
-  throw new Error("API_URL env var must be set")
-}
-if (!accessToken) {
-  throw new Error("ACCESS_TOKEN env var must be set")
-}
-if (!arduinoUrl) {
-  throw new Error("ARDUINO_URL env var must be set")
-}
+const config = require("./config")
 
 const allowedCommands = ["open", "close", "toggle", "stop", "ping"]
 
 function connect() {
   const options = {
-    url: `${apiUrl}/long-polling?accessToken=${accessToken}`,
-    timeout: 25e3
+    url: `${config.apiUrl}/long-polling?accessToken=${config.accessToken}`,
+    timeout: 31e3
   }
   try {
     request(options, (error, response, body) => {
@@ -37,11 +24,11 @@ function connect() {
       try {
         const data = JSON.parse(body)
         handleCommand(data.command)
+        connect()
       } catch (e) {
         log(`Error occurred while handling request ${e.message}`)
+        setTimeout(connect, 3e3)
       }
-
-      connect()
     })
   } catch (e) {
     log(`Request error: ${e}. Reconnecting...`)
@@ -59,7 +46,7 @@ function handleCommand(command) {
     return
   }
 
-  const url = `${arduinoUrl}/${command}`
+  const url = `${config.arduinoUrl}/${command}`
   log(`Requesting GET ${url}`)
   request(url, (error, response, body) => {
     if (error) {
@@ -76,3 +63,13 @@ function log(...args) {
 }
 
 connect()
+
+function handle(signal) {
+  return function () {
+    log(`Received ${signal}`)
+    process.exit(1)
+  }
+}
+
+process.on("SIGINT", handle("SIGINT"))
+process.on("SIGTERM", handle("SIGTERM"))

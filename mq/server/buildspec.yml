@@ -27,8 +27,7 @@ phases:
   build:
     commands:
       - |
-        allowedBranches="master dev"
-        if [ "$GIT_REF_TYPE" = "origin" ] && echo $allowedBranches | grep -q "$GIT_REF_NAME"; then
+        if [ "$GIT_REF_TYPE" = "tag" ]; then
           cd mq/server
           export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
           docker build -t $IMAGE_FULL_NAME .
