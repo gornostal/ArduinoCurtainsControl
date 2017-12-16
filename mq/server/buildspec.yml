@@ -18,7 +18,7 @@ phases:
       - export DOCKER_LOGIN="$(aws ecr get-login --no-include-email --region us-east-1)"
       - eval $DOCKER_LOGIN
       - export GIT_REF="$(git show-ref | grep $CODEBUILD_SOURCE_VERSION | grep -iv head)"
-      # GIT_REF_TYPE can be either "origin" (for branches) or "tag"
+      # GIT_REF_TYPE can be either "origin" (for branches) or "tags"
       - export GIT_REF_TYPE="$(echo "$GIT_REF" | awk -F "/" '{print $(NF-1)}')"
       # GIT_REF_NAME is either a branch or tag name
       - export GIT_REF_NAME="$(echo "$GIT_REF" | awk -F "/" '{print $NF}')"
@@ -27,7 +27,7 @@ phases:
   build:
     commands:
       - |
-        if [ "$GIT_REF_TYPE" = "tag" ]; then
+        if [ "$GIT_REF_TYPE" = "tags" ]; then
           cd mq/server
           export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
           docker build -t $IMAGE_FULL_NAME .
