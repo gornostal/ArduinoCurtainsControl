@@ -1,13 +1,9 @@
-FROM node:8-alpine
+FROM node:16-alpine
 
-WORKDIR /var/app
-
-COPY package.json .
-
-EXPOSE 8080
-
-RUN yarn install
+WORKDIR /app
+COPY package* .
+RUN npm install
 
 COPY . .
 
-CMD yarn start
+CMD node server.js

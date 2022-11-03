@@ -4,7 +4,6 @@ node_modules
 env.sh
 client.out
 nohup.out
-package-lock.json
 mq/client/config.json
 mq/client/client.pid
 mq/client/client.log
